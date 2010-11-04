@@ -3,7 +3,7 @@ Gnix_Db
 
 Gnix_Db（ニックス・ディービー）はPHP5.3/MySQL専用のORマッピングツール（のプロトタイプ）です。データ規模、アクセス規模が大きく、複雑なJOINやサブクエリーを利用していないシステムに向いています。
 
-※プロトタイプとはいえ、このORMは月間数億PV程度のWebサイトで実際に運用されており、Apache処理時間も100msec/req程度を維持しています。
+※プロトタイプとはいえ、このORMは月間数億PV程度のWebサイトで実際に運用されており、1ページあたりのApache処理時間も100msec/req程度を維持しています。
 
 
 ## 経緯
@@ -25,9 +25,9 @@ PHP5.3の機能、[遅延静的束縛](http://php.net/manual/ja/language.oop5.la
 
 ## 特徴
 
-[Propel](http://www.propelorm.org/)と[Zend_Db_Table](http://framework.zend.com/manual/ja/zend.db.table.html)から影響を受けています。クライアント側のコードはPropelに非常に近いです。
+[Propel](http://www.propelorm.org/)と[Zend_Db_Table](http://framework.zend.com/manual/ja/zend.db.table.html)から影響を受けています。クライアント側のコードはPropelを利用した場合とよく似ています。
 
-以下のものは不要です：
+以下のものは**不要**です：
 
   - XML、yaml、json等の定義ファイル
   - スキーマやテーブル定義の変更
@@ -54,10 +54,10 @@ PHP5.3の機能、[遅延静的束縛](http://php.net/manual/ja/language.oop5.la
 
 ### 1. インストール
 
-1. このページ上部のDownloadsボタンよりデータを取得・展開します。
+1. このページ上部の「Downloads（ダウンロード）」ボタンよりデータを取得・展開します。
 2. もしZendFrameworkを利用している場合は以下のコードで、自動ロードが可能です。そうでない場合は、エラーメッセージの通り、クラス（PHPファイル）をrequire_onceしてください。
 
-ZendFrameworkによる自動ロードの設定例
+自動ロードの設定例
 
     set_include_path(get_include_path() . PATH_SEPARATOR . '/path/to/gnix-db/library'); 
     
@@ -68,7 +68,7 @@ ZendFrameworkによる自動ロードの設定例
 
 ### 2. DB接続設定
 
-以下は、twitterスキーマのマスターDBへの設定例です。第一引数は接続名で、なんでも構いませんが、スキーマ名と合わせると便利です。attributesは[PDOの属性](http://php.net/manual/ja/pdo.setattribute.php)です。
+以下は、twitterスキーマのマスターDBへの設定例です。第一引数は接続名でなんでも構いませんが、スキーマ名と合わせると便利です。attributesは[PDOの属性](http://php.net/manual/ja/pdo.setattribute.php)です。
 
     Gnix_Db_Connection_Master::setInfo(
         'twitter',
@@ -124,7 +124,7 @@ ZendFrameworkによる自動ロードの設定例
         )
     );
 
-ほとんどの場合、PDO属性は共通のものを利用するはずです。その場合、上記の設定よりも先にデフォルト値を設定します。
+多くの場合、全ての環境のPDO属性は共通のものを利用すると思います。その場合、上記の接続設定よりも先にデフォルト値を設定します。
 
     Gnix_Db_Connection::setDefaultAttributes(array(
         PDO::ATTR_ERRMODE            => PDO::ERRMODE_EXCEPTION,
@@ -133,12 +133,12 @@ ZendFrameworkによる自動ロードの設定例
 
 これらの設定は変数に保存されるだけで実際にはMySQLに接続しません。実際に接続されるのは、初めてのクエリーが発行される時です（遅延接続）。よって、もし百台のMySQLサーバーをお持ちであれば、百台の設定コードを書いてしまいましょう。それによるオーバーヘッドはほとんどありません。
 
-一方、遅延接続は設定を間違えてもエラーになりません。接続を確認するには、以下のようにします。正しければPDOオブジェクトを返却します、間違えていればPDOレベルのエラーとなります。
+なお、遅延接続は設定を間違えてもエラーになりません（設定時に接続しないため）。接続を確認するには、get() を利用します。正しければPDOオブジェクトを返却します、間違えていればPDOレベルのエラーとなります。
 
     var_dump(Gnix_Db_Connection_Master::get('twitter'));
     var_dump(Gnix_Db_Connection_Slave::get('twitter'));
 
-上記のコードは新しいサーバーを追加した時に、一度確認するだけです。
+上記のコードは新しいサーバーを追加した時に、一度確認のために必要になるだけです。
 
 また、通常は不要ですが、広告の取得等、時間のかかる処理の前に接続を破棄したい場合等は以下のようにします。
 
@@ -170,7 +170,7 @@ ZendFrameworkによる自動ロードの設定例
         protected static $_key = 'tweet_id';
     }
 
-※実はマルチカラム主キーには対応していません。マルチカラム主キーでのデータ取得は、以下で説明するクエリー生成を利用すれば簡単にできます。マルチカラム主キーに対応していない理由は、Railsの登場以降、DB設計はAUTO_INCREMENTな人工キーを用いるのが主流であること、またアクセス規模・データ規模が大きくなるにつれ、主キーでの取得/更新の比率が増え（Key-Value Store的になる）、主キーは出来るだけ単純にする傾向があるためです。
+※実はマルチカラム主キーには対応していません。マルチカラム主キーでのデータ取得は、後で説明するクエリー生成を利用すれば可能です。マルチカラム主キーに対応していない理由は、Railsの登場以降、DB設計はAUTO_INCREMENTな人工キーを用いるのが主流になった（っぽい？）こと、またアクセス規模・データ規模が大きくなるにつれ、主キーでの取得/更新の比率が増え、主キーは出来るだけ単純にする傾向があるためです（Key-Value Store的な構成になる）。
 
 次に、tweetテーブルの1行を担当する行クラスを作成します。**Gnix_Db_Row**を継承します。中身は空です。
 
@@ -253,7 +253,7 @@ INSERTは以下のようにします。
         ->page(3)
     ;
 
-生成したCriteriaはdebug()メソッドで確認できます。
+生成したCriteriaはdebug() メソッドで確認できます。
 
     echo $criteria->debug();
     
@@ -267,9 +267,9 @@ INSERTは以下のようにします。
 
 findAll() メソッドにCriteriaを渡せばデータを取得できます。完成したメソッドは以下の通りです。
 
-    public static function findFooBar()
+    public static function findFooBar($keyword, $page)
     {
-        $criteria = self::_getCriteria($keyword, $page)
+        $criteria = self::_getCriteria()
             ->whereLike('text', '%' . $keyword . '%')
             ->orderByDesc('id')
             ->limit(15)
@@ -330,7 +330,7 @@ whereメソッドの例）
 - where('column1 = ? OR column2 = ?', array(10, 20))
 - where('updated_at < (CURRENT_TIMESTAMP - INTERVAL 15 SECOND)')
 - where('MATCH (text) AGAINST (? IN BOOLEAN MODE)', '*D+ ' . $keyword)
-- where('id IN (SELECT foo FROM bar WHERE baz = ?)', 3)   // サブクエリーを使いたい場合
+- where('id IN (SELECT foo FROM bar WHERE baz = ?)', 3)   // どうしてもサブクエリーを使いたい場合
 
 #### GROUP BY
 
@@ -344,6 +344,15 @@ whereメソッドの例）
 
 1. orderBy('column')
 2. orderByDesc('column')
+
+下記の例では、ORDER BY aaa, bbb DESC, ccc, ddd DESC を生成します。
+
+    $criteria = self::_getCriteria()
+        ->orderBy('aaa')
+        ->orderByDesc('bbb')
+        ->orderBy('ccc')
+        ->orderByDesc('ddd')
+    ;
 
 #### LIMIT系
 
