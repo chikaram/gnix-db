@@ -58,6 +58,7 @@ PHP5.3の機能、[遅延静的束縛](http://php.net/manual/ja/language.oop5.la
 2. もしZendFrameworkを利用している場合は以下のコードで、自動ロードが可能です。そうでない場合は、エラーメッセージの通り、クラス（PHPファイル）をrequire_onceしてください。
 
     set_include_path(get_include_path() . PATH_SEPARATOR . '/path/to/gnix-db/library'); 
+    
     require_once 'Zend/Loader/Autoloader.php'; 
     $autoloader = Zend_Loader_Autoloader::getInstance(); 
     $autoloader->setFallbackAutoloader(true); 
