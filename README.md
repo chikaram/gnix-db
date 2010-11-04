@@ -63,6 +63,16 @@ PHP5.3の機能、[遅延静的束縛](http://php.net/manual/ja/language.oop5.la
     $autoloader = Zend_Loader_Autoloader::getInstance(); 
     $autoloader->setFallbackAutoloader(true); 
 
+
+Write the code below before you start MVC:
+
+    $view = new Gnix_View_AutoEscaper(); 
+    Zend_Controller_Action_HelperBroker::getStaticHelper('viewRenderer')->setView($view);
+
+That's all and you'll be free from '$this->escape()' that messes up your view templates!
+
+
+
 ### 2. DB接続設定
 
 以下は、twitterスキーマのマスターDBへの設定例です。第一引数は接続名で、なんでも構いませんが、スキーマ名と合わせると便利です。attributesは[PDOの属性](http://php.net/manual/ja/pdo.setattribute.php)です。
