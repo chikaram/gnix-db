@@ -1,9 +1,9 @@
 Gnix_Db
 ======
 
-Gnix_Db（ニックス・ディービー）はPHP5.3/MySQL専用のORマッピングツール（のプロトタイプ）です。データ規模、アクセス規模が大きく、複雑なJOINやサブクエリーを利用していないシステムに向いています。
+Gnix_Db（ニックス・ディービー）はPHP5.3/MySQL専用のORマッピングツールのプロトタイプです。データ規模、アクセス規模が大きく、複雑なJOINやサブクエリーを利用していないシステムに向いています。
 
-※プロトタイプとはいえ、このORMは月間数億PV程度のWebサイトで実際に運用されており、1ページあたりのApache処理時間も100msec/req程度を維持しています。
+※プロトタイプとはいえ、このORMは数ヶ月間実際に運用されており、Webサーバー1台あたり約2億PV/monthを、Apache処理時間100msec/req程度で処理しています。
 
 
 ## 経緯
@@ -68,7 +68,7 @@ PHP5.3の機能、[遅延静的束縛](http://php.net/manual/ja/language.oop5.la
 
 ### 2. DB接続設定
 
-以下は、twitterスキーマのマスターDBへの設定例です。第一引数は接続名でなんでも構いませんが、スキーマ名と合わせると便利です。attributesは[PDOの属性](http://php.net/manual/ja/pdo.setattribute.php)です。
+以下は、twitterスキーマのマスターDBへの設定例です。第一引数は接続名でなんでも構いませんが、スキーマ名と合わせると便利です。attributesは[PDO属性](http://php.net/manual/ja/pdo.setattribute.php)です。
 
     Gnix_Db_Connection_Master::setInfo(
         'twitter',
@@ -107,7 +107,7 @@ PHP5.3の機能、[遅延静的束縛](http://php.net/manual/ja/language.oop5.la
     var_dump(Gnix_Db_Connection_Master::getInfo('twitter'));
     var_dump(Gnix_Db_Connection_Slave::getInfo('twitter'));
 
-単一サーバーで、マスター/スレーブ構成でない場合は、同じ設定を2度行うか、Gnix_Db_Connectionクラスを利用します。
+単一サーバーで、マスター/スレーブ構成でない場合は、同じ設定を2度行うか、Gnix_Db_Connectionクラスを利用します。なおマスター/スレーブの設定情報がPDO属性を含めて完全に同じ場合は、内部的に同じ接続（PDOインスタンス）が利用されます。
 
     Gnix_Db_Connection::setInfo(
         'twitter',
@@ -131,7 +131,7 @@ PHP5.3の機能、[遅延静的束縛](http://php.net/manual/ja/language.oop5.la
         PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
     ));
 
-これらの設定は変数に保存されるだけで実際にはMySQLに接続しません。実際に接続されるのは、初めてのクエリーが発行される時です（遅延接続）。よって、もし百台のMySQLサーバーをお持ちであれば、百台の設定コードを書いてしまいましょう。それによるオーバーヘッドはほとんどありません。
+これらの設定は変数に保存されるだけで実際にはMySQLに接続しません。実際に接続されるのは、初めてのクエリーが発行される時です（遅延接続）。よって、もし百台のMySQLサーバーをお持ちであれば、百台の設定コードを書いても問題ありません。それによるオーバーヘッドはほとんどありません。
 
 なお、遅延接続は設定を間違えてもエラーになりません（設定時に接続しないため）。接続を確認するには、get() を利用します。正しければPDOオブジェクトを返却します、間違えていればPDOレベルのエラーとなります。
 
@@ -145,10 +145,10 @@ PHP5.3の機能、[遅延静的束縛](http://php.net/manual/ja/language.oop5.la
     Gnix_Db_Connection_Master::disconnect('twitter');
     Gnix_Db_Connection_Slave::disconnect('twitter');
     
-    // 'twitter'のマスター/スレープを一括で破棄
+    // 上記のコードを1行で書く
     Gnix_Db_Connection::disconnect('twitter');
     
-    // 'twitter'を含むの全ての接続を破棄
+    // 全ての接続を破棄
     Gnix_Db_Connection::disconnectAll();
 
 ### 3. クラスを作る
@@ -320,7 +320,7 @@ findAll() メソッドにCriteriaを渡せばデータを取得できます。�
 7. whereIsNull('column', 'value')
 8. whereIsNotNull('column', 'value')
 9. whereNotLike('column', 'value')
-10. whereBetween('column', 'from_value', 'to_value')   // なぜか未実装（実装予定）
+10. whereBetween('column', 'from_value', 'to_value')
 11. whereIn('column', array('value1', 'value2', 'value3', ...))
 12. whereNotIn('column', array('value1', 'value2', 'value3', ...))
 13. where('string' [, 'value' OR array('value1', 'value2', 'value3', ...)])
@@ -365,12 +365,12 @@ whereメソッドの例）
 
 #### SELECT系
 
-1. array(Gnix_Db_Row) = findAll(Gnix_Db_Criteria $criteria, array $columns = array('*'), $master = false)
-2. Gnix_Db_Row = find(Gnix_Db_Criteria $criteria, array $columns = array('*'), $master = false)
-3. Gnix_Db_Row = findByKey($key, array $columns = array('*'), $master = false)
-4. int $count = count(Gnix_Db_Criteria $criteria, $master = false)
+1. array(Gnix_Db_Row) = findAll(Gnix_Db_Criteria $criteria, array $columns = array('*'))
+2. Gnix_Db_Row = find(Gnix_Db_Criteria $criteria, array $columns = array('*'))
+3. Gnix_Db_Row = findByKey($key, array $columns = array('*'))
+4. int $count = count(Gnix_Db_Criteria $criteria)
 
-$master = true でマスターDBから取得します。またデータの取得結果は以下になります。
+なお各メソッド名に接尾辞'OnMaster'を付けると、マスターDBでSELECTします。（findAllOnMaster、findOnMaster、findByKeyOnMaster、countOnMaster）
 
   - 複数行取得（findAll）で結果あり： array(行オブジェクト, 行オブジェクト, 行オブジェクト...)
   - 複数行取得（findAll）で結果なし： array()
@@ -398,26 +398,4 @@ $master = true でマスターDBから取得します。またデータの取得
 
 ## License
 
-    The MIT License
-    
-    Copyright (c) 2010 GMO Media, Inc.
-
-    Permission is hereby granted, free of charge, to any person obtaining a copy 
-    of this software and associated documentation files (the "Software"), to deal 
-    in the Software without restriction, including without limitation the rights 
-    to use, copy, modify, merge, publish, distribute, sublicense, and/or sell 
-    copies of the Software, and to permit persons to whom the Software is 
-    furnished to do so, subject to the following conditions:
-
-    The above copyright notice and this permission notice shall be included in 
-    all copies or substantial portions of the Software.
-
-    THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR 
-    IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, 
-    FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE 
-    AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER 
-    LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, 
-    OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN 
-    THE SOFTWARE.
-
-[Copyright (c) 2010 GMO Media, Inc.](http://www.gmo-media.jp/licence/mit.html)
+[The MIT License](http://www.gmo-media.jp/licence/mit.html)

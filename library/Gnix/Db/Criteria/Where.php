@@ -72,11 +72,10 @@ final class Gnix_Db_Criteria_Where
         $this->where($column . ' NOT LIKE ?', $param);
     }
 
-    // TODO: Implement this!
-//    public function whereBetween($column, array $params)
-//    {
-//        $this->where($column . ' BETWEEN ? AND ?', $params);
-//    }
+    public function whereBetween($column, $paramFrom, $paramTo)
+    {
+        $this->where($column . ' BETWEEN ? AND ?', array($paramFrom, $paramTo));
+    }
 
     public function whereIn($column, array $params)
     {

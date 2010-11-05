@@ -64,7 +64,7 @@ abstract class Gnix_Db_Row
             call_user_func(array($this->_getQueryClass(), 'updateByKey'), $this->_row, $this->_row[$keyName]);
         } else {
             $key       = call_user_func(array($this->_getQueryClass(), 'create'),    $this->_row);
-            $rowObject = call_user_func(array($this->_getQueryClass(), 'findByKey'), $key, array('*'), true);
+            $rowObject = call_user_func(array($this->_getQueryClass(), 'findByKeyOnMaster'), $key);
             $this->_row = $rowObject->_row;
         }
     }
