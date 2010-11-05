@@ -107,7 +107,7 @@ PHP5.3の機能、[遅延静的束縛](http://php.net/manual/ja/language.oop5.la
     var_dump(Gnix_Db_Connection_Master::getInfo('twitter'));
     var_dump(Gnix_Db_Connection_Slave::getInfo('twitter'));
 
-単一サーバーで、マスター/スレーブ構成でない場合は、同じ設定を2度行うか、Gnix_Db_Connectionクラスを利用します。なおマスター/スレーブの設定情報がPDO属性を含めて完全に同じ場合は、内部的に同じ接続（PDOインスタンス）が利用されます。
+単一サーバーで、マスター/スレーブ構成でない場合は、同じ設定を2度行うか、Gnix_Db_Connectionクラスを利用します。なおマスター/スレーブの設定情報がPDO属性を含めて完全に同じ場合は、内部的に同じ接続（PDOインスタンス）が利用されます。よってスレーブレスなDB設計の場合でもコネクションの無駄はありません。
 
     Gnix_Db_Connection::setInfo(
         'twitter',
@@ -370,7 +370,14 @@ whereメソッドの例）
 3. Gnix_Db_Row = findByKey($key, array $columns = array('*'))
 4. int $count = count(Gnix_Db_Criteria $criteria)
 
-なお各メソッド名に接尾辞'OnMaster'を付けると、マスターDBでSELECTします。（findAllOnMaster、findOnMaster、findByKeyOnMaster、countOnMaster）
+なお各メソッド名に接尾辞'OnMaster'を付けると、マスターDBでSELECTします。
+
+1. findAllOnMaster()
+2. findOnMaster()
+3. findByKeyOnMaster()
+4. countOnMaster()
+
+またデータの取得結果は以下になります。
 
   - 複数行取得（findAll）で結果あり： array(行オブジェクト, 行オブジェクト, 行オブジェクト...)
   - 複数行取得（findAll）で結果なし： array()
