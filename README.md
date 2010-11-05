@@ -370,7 +370,7 @@ whereメソッドの例）
 3. Gnix_Db_Row = findByKey($key, array $columns = array('*'))
 4. int $count = count(Gnix_Db_Criteria $criteria)
 
-なお各メソッド名に接尾辞'OnMaster'を付けると、マスターDBでSELECTします。
+なお各メソッド名に接尾辞'OnMaster'を付けると、マスターDBでSELECTします（戻り値・引数は同じ）。
 
 1. findAllOnMaster()
 2. findOnMaster()
