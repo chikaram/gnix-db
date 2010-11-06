@@ -29,10 +29,10 @@ PHP5.3の機能、[遅延静的束縛](http://php.net/manual/ja/language.oop5.la
 
 以下のものは**不要**です：
 
-  - XML、yaml、json等の定義ファイル
+  - XML、yaml、json等の定義ファイル （データ定義の管理の責任をデータベースにもたせました）
   - スキーマやテーブル定義の変更
   - コマンド （自動生成しなくてはいけないコード自体不要です）
-  - プロパティや連想配列の操作 （結果はすべてオブジェクトで全てメソッドでの操作になります）
+  - プロパティや連想配列の操作 （結果は演算やMAX() や DATE()関数等を利用した場合も含めて、全てメソッドでの操作になります）
   - DESCRIBE TABLE等の開発者が意図しないクエリー
   - SQL
 
@@ -200,6 +200,8 @@ INSERTは以下のようにします。
     echo $tweet->getId();                // idカラムの値を表示
     echo $tweet->getCreatedAt();         // created_atカラムの値を表示
 
+setしていないidカラムやcreated_atカラムが取得できる理由は、save() 直後に取得したLAST_INSERT_IDで再度SELECTし、その結果を自分自身のデータと置き換えているためです。また、このSELECTはスレーブDBの遅延も考慮しマスターDB上で行われます。このORMの特徴に「開発者が意図しないクエリー」と書きましたが、この1点だけは例外です。主キーでの取得は非常に高速なため、ほとんどの場合は問題ないと思いますが、このSELECTクエリーが気持ち悪いという場合は、後述の createメソッドを利用してください。
+
 上記とは別のプロセスでSELECTする場合、以下のようにします。
 
     $tweet = Twitter_Tweet_Query::findByKey(1);   // 主キーが「1」のものを取得
@@ -207,6 +209,12 @@ INSERTは以下のようにします。
     echo $tweet->getScreenName();                 // screen_nameのカラム値を表示
     echo $tweet->getText();                       // textのカラム値を表示
     echo $tweet->getCreatedAt();                  // created_atのカラム値を表示
+
+find系メソッドの第二引数は取得するカラム名の配列です。もし演算や関数を用いる場合は必ずASキーワードでエイリアス名をつけて下さい。
+
+    $tweet = Twitter_Tweet_Query::findByKey(1, array('(id + 100) AS foo', 'DATE(created_at) AS bar'));
+    echo $tweet->getFoo();   // id + 100 の値を表示
+    echo $tweet->getBar();   // DATE(created_at) の値を表示
 
 続けてUPDATEを行います。
 
@@ -374,12 +382,14 @@ whereメソッドの例）
 3. Gnix_Db_Row = findByKey($key, array $columns = array('*'))
 4. int $count = count(Gnix_Db_Criteria $criteria)
 
-なお各メソッド名に接尾辞'OnMaster'を付けると、マスターDBでSELECTします（戻り値・引数は同じ）。
+また、各メソッド名に接尾辞'OnMaster'を付けると、マスターDBでSELECTします（戻り値・引数は同じ）。メソッド名が冗長ですが、ほとんど使うことはないでしょう。
 
 1. findAllOnMaster()
 2. findOnMaster()
 3. findByKeyOnMaster()
 4. countOnMaster()
+
+なお、行オブジェクトの save() メソッドでINSERTした直後のSELECTクエリーは、内部的に findByKeyOnMaster() が呼ばれます。
 
 またデータの取得結果は以下になります。
 
@@ -405,6 +415,8 @@ whereメソッドの例）
 #### REPLACE系
 
 実装予定
+
+なお、スレーブDBでの更新メソッドはありません。
 
 
 ## License
