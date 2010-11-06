@@ -56,16 +56,19 @@ abstract class Gnix_Db_Row
         throw new Gnix_Db_Exception('Call to undefined method ' . get_class($this) . '::' . $method . '()');
     }
 
-    public function save()
+    public function save($findByKeyAgain = true)
     {
         $keyName = call_user_func(array($this->_getQueryClass(), 'getKeyName'));
 
         if (array_key_exists($keyName, $this->_row)) {
             call_user_func(array($this->_getQueryClass(), 'updateByKey'), $this->_row, $this->_row[$keyName]);
         } else {
-            $key       = call_user_func(array($this->_getQueryClass(), 'create'),    $this->_row);
-            $rowObject = call_user_func(array($this->_getQueryClass(), 'findByKeyOnMaster'), $key);
-            $this->_row = $rowObject->_row;
+            $key = call_user_func(array($this->_getQueryClass(), 'create'),    $this->_row);
+            if ($findByKeyAgain) {
+                $rowObject = call_user_func(array($this->_getQueryClass(), 'findByKeyOnMaster'), $key);
+                $this->_row = $rowObject->_row;
+            }
+            return $key;
         }
     }
 
