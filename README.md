@@ -45,7 +45,7 @@ PHP5.3の機能、[遅延静的束縛](http://php.net/manual/ja/language.oop5.la
 
   - 更新＝マスター/参照＝スレーブの自動切換え （また特定の参照クエリーをマスターに向けることも可能です）
   - DBへの遅延接続 （初めてクエリーが発行される際に初めて接続します）
-  - 変則的なクエリー （Sennaや自作プラグイン、ストアド関数、MySQL特有の日時関数等を自由に記述できます）
+  - 変則的なクエリー （Tritonn（Senna）や自作プラグイン、ストアド関数、MySQL特有の日時関数等を自由に記述できます）
   - 取得するカラムの指定 （デフォルトは「*」による全カラム取得ですが、必要なカラムをクエリー単位に指定できます）
   - トランザクション （専用のメソッドはありませんがPDOオブジェクトを取得できるため自由に行えます）
 
@@ -341,7 +341,7 @@ whereメソッドの例）
 
 - where('column1 = ? OR column2 = ?', array(10, 20))
 - where('updated_at < (CURRENT_TIMESTAMP - INTERVAL 15 SECOND)')
-- where('MATCH (text) AGAINST (? IN BOOLEAN MODE)', '*D+ ' . $keyword)
+- where('MATCH (text) AGAINST (? IN BOOLEAN MODE)', '*D+ ' . $keyword) // Tritonnならこんな感じ
 - where('id IN (SELECT foo FROM bar WHERE baz = ?)', 3)   // JOINやサブクエリーをどうしても使いたい場合
 
 #### GROUP BY系
