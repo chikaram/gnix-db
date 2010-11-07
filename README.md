@@ -200,7 +200,7 @@ INSERTは以下のようにします。
     echo $tweet->getId();                // idカラムの値を表示
     echo $tweet->getCreatedAt();         // created_atカラムの値を表示
 
-setしていないidカラムやcreated_atカラムが取得できる理由は、save() 直後に取得したLAST_INSERT_IDで再度SELECTし、その結果を自分自身のデータと置き換えているためです。また、このSELECTはスレーブDBの遅延も考慮してマスターDB上で行われます。このORMの特徴に「開発者が意図しないクエリー」と書きましたが、この1点だけは例外です。主キーでの取得は非常に高速なため、ほとんどの場合は問題ないと思いますが、マスターDBに[BLACKHOLE ストレージエンジン](http://dev.mysql.com/doc/refman/5.1/ja/blackhole-storage-engine.html)（もしくはMyISAM。。）を採用している等の特殊な理由で、このSELECT処理が不要な場合は、save(false) のようにfalseを渡すか、後述の createメソッドを利用してください。
+setしていないidカラムやcreated_atカラムが取得できる理由は、save() 直後に取得したLAST_INSERT_IDで再度SELECTし、その結果を自分自身のデータと置き換えているためです。また、このSELECTはスレーブDBの遅延も考慮してマスターDB上で行われます。このORMの特徴に「開発者が意図しないクエリー」と書きましたが、この1点だけは例外です。主キーでの取得は非常に高速なため、ほとんどの場合は問題ないと思いますが、マスターDBに[BLACKHOLE ストレージエンジン](http://dev.mysql.com/doc/refman/5.1/ja/blackhole-storage-engine.html)（もしくはMyISAM）を採用している等の特殊な理由で、このSELECT処理が不要な場合は、save(false) のようにfalseを渡すか、後述の createメソッドを利用してください。
 
 上記とは別のプロセスでSELECTする場合、以下のようにします。
 
@@ -406,9 +406,9 @@ $dataは挿入するデータの連想配列です。エスケープ不要な命
         'screen_name' => 'chikaram',
         'text'        => 'Good Morning!',
         'created_at'  => new Gnix_Db_Literal('NOW()'),
-    ))
+    ));
 
-少し冗長ですが、これらのメソッドは一括更新やバッチ処理でしか利用しません。通常は、行オブジェクトのsave()やdelete()メソッドを利用します。
+少し冗長ですが、これらのメソッドは一括更新やバッチ処理でしか利用しません。通常は、行オブジェクトのsave() やdelete() メソッドを利用します。
 
 #### UPDATE系
 
