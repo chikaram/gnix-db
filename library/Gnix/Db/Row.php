@@ -38,7 +38,6 @@ abstract class Gnix_Db_Row
                     $this->_row[$column] = $arguments[0];
                     return;
                 }
-                throw new Gnix_Db_Exception('Need to set value to ' . get_class($this) . '::' . $method . '()');
        }
 
         throw new Gnix_Db_Exception('Call to undefined method ' . get_class($this) . '::' . $method . '()');
@@ -56,20 +55,27 @@ abstract class Gnix_Db_Row
         throw new Gnix_Db_Exception('Call to undefined method ' . get_class($this) . '::' . $method . '()');
     }
 
-    public function save($findByKeyAgain = true)
+    public function save($findAfterCreate = true)
     {
         $keyName = call_user_func(array($this->_getQueryClass(), 'getKeyName'));
 
+        // UPDATE if there is Primary Key data.
         if (array_key_exists($keyName, $this->_row)) {
             call_user_func(array($this->_getQueryClass(), 'updateByKey'), $this->_row, $this->_row[$keyName]);
-        } else {
-            $key = call_user_func(array($this->_getQueryClass(), 'create'),    $this->_row);
-            if ($findByKeyAgain) {
-                $rowObject = call_user_func(array($this->_getQueryClass(), 'findByKeyOnMaster'), $key);
-                $this->_row = $rowObject->_row;
-            }
-            return $key;
+            return;
         }
+
+        // INSERT if there is NOT Primary Key data.
+        $key = call_user_func(array($this->_getQueryClass(), 'create'), $this->_row);
+        if ($findAfterCreate) {
+            $rowObject = call_user_func(array($this->_getQueryClass(), 'findByKeyOnMaster'), $key);
+            if (!isset($rowObject->_row)) {
+                // Couldn't get data just after inserting it. This couldn't be possible!
+                throw new Gnix_Db_Exception("Can't get data 'PRIMARY KEY = $key' from " . get_class($this) . 'master db.');
+            }
+            $this->_row = $rowObject->_row;
+        }
+        return $key;
     }
 
     public function delete()

@@ -13,6 +13,7 @@ final class Gnix_Db_Criteria
     private $_where;
     private $_orderBy;
     private $_limit;
+    private $_index;
 
     public static function self()
     {
@@ -25,6 +26,7 @@ final class Gnix_Db_Criteria
         $this->_where   = new Gnix_Db_Criteria_Where();
         $this->_orderBy = new Gnix_Db_Criteria_OrderBy();
         $this->_limit   = new Gnix_Db_Criteria_Limit();
+        $this->_index   = new Gnix_Db_Criteria_Index();
     }
 
     public function __call($name, array $arguments)
@@ -55,6 +57,10 @@ final class Gnix_Db_Criteria
             case 'page':
                 call_user_func_array(array($this->_limit, $name), $arguments);
                 return $this;
+            case 'indexUse':
+            case 'indexForce':
+                call_user_func_array(array($this->_index, $name), $arguments);
+                return $this;
         }
 
         throw new Exception('Call to undefined method ' . __CLASS__ . '::' . $name . '()');
@@ -62,7 +68,7 @@ final class Gnix_Db_Criteria
 
     public function assemble()
     {
-        return $this->_where->toString() . $this->_orderBy->toString() . $this->_limit->toString();
+        return $this->_index->toString() . $this->_where->toString() . $this->_orderBy->toString() . $this->_limit->toString();
     }
 
     public function getParams()
@@ -73,7 +79,7 @@ final class Gnix_Db_Criteria
     public function debug()
     {
         ob_start();
-        echo 'SQL: ' . $this->assemble() . PHP_EOL;
+        echo 'SQL:' . $this->assemble() . PHP_EOL;
         echo ' -- ' . PHP_EOL;
         echo 'PARAMS: ';
         var_dump($this->_where->getParams());
