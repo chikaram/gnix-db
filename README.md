@@ -374,7 +374,7 @@ whereメソッドの例）
 2. offset(int)
 3. page(int)   // offset値の自動計算
 
-#### INDEX系（MySQL専用）
+#### INDEX系 （MySQL専用）
 
 1. indexUse('index_name')     // USE INDEX (index_name) を発行
 2. indexForce('index_name')   // FORCE INDEX (index_name) を発行
@@ -386,10 +386,12 @@ IGNORE INDEX や USE/FORCE/IGNORE FOR ～ 等の高度な構文には対応し�
 
 #### SELECT系
 
-1. array(Gnix_Db_Row) = findAll(Gnix_Db_Criteria $criteria, array $columns = array('*'))
-2. Gnix_Db_Row = find(Gnix_Db_Criteria $criteria, array $columns = array('*'))
-3. Gnix_Db_Row = findByKey($key, array $columns = array('*'))
-4. int $count = count(Gnix_Db_Criteria $criteria)
+1. array(Gnix_Db_Row) = findAll(Gnix_Db_Criteria $criteria, array $columns = array('*'), $connectionName = null)
+2. Gnix_Db_Row = find(Gnix_Db_Criteria $criteria, array $columns = array('*'), $connectionName = null)
+3. Gnix_Db_Row = findByKey($key, array $columns = array('*'), $connectionName = null)
+4. int $count = count(Gnix_Db_Criteria $criteria, $connectionName = null)
+
+最終パラメータはGnix_Db_Connectionで設定した接続名です。デフォルトはクラス名が "Twitter_Tweet_Query" なら先頭の twitter が利用されます。
 
 また、各メソッド名に接尾辞'OnMaster'を付けると、マスターDBでSELECTします（戻り値・引数は同じ）。メソッド名が冗長ですが、ほとんど使うことはないでしょう。
 
@@ -407,7 +409,7 @@ IGNORE INDEX や USE/FORCE/IGNORE FOR ～ 等の高度な構文には対応し�
 
 #### INSERT系
 
-1. int $lastInsertId = create(array $data)
+1. int $lastInsertId = create(array $data, $connectionName = null)
 
 $dataは挿入するデータの連想配列です。エスケープ不要な命令文は Gnix_Db_Literal でラップしてから渡します。
 
@@ -421,13 +423,13 @@ $dataは挿入するデータの連想配列です。エスケープ不要な命
 
 #### UPDATE系
 
-1. int $rowCount = update(array $data, Gnix_Db_Criteria $criteria)
-2. int $rowCount = updateByKey(array $data, $key)
+1. int $rowCount = update(array $data, Gnix_Db_Criteria $criteria, $connectionName = null)
+2. int $rowCount = updateByKey(array $data, $key, $connectionName = null)
 
 #### DELETE系
 
-1. int $rowCount = delete(Gnix_Db_Criteria $criteria)
-2. int $rowCount = deleteByKey($key)
+1. int $rowCount = delete(Gnix_Db_Criteria $criteria, $connectionName = null)
+2. int $rowCount = deleteByKey($key, $connectionName = null)
 
 #### REPLACE系
 

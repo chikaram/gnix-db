@@ -22,7 +22,7 @@ abstract class Gnix_Db_Query
     /**
      * CREATE method
      */
-    public static function create(array $data)
+    public static function create(array $data, $connectionName = null)
     {
         $columns = array();
         $holders = array();
@@ -40,7 +40,7 @@ abstract class Gnix_Db_Query
         $resolver = self::_getResolver();
         $sql = 'INSERT INTO ' . $resolver->getTable() . ' (' . implode(', ', $columns) . ') VALUES (' . implode(', ', $holders) . ')';
 
-        $dbh = Gnix_Db_Connection_Master::get($resolver->getConnectionName());
+        $dbh = Gnix_Db_Connection_Master::get($connectionName ?: $resolver->getConnectionName());
         $sth = $dbh->prepare($sql);
         $sth->execute($params);
         return $dbh->lastInsertId();
@@ -49,72 +49,70 @@ abstract class Gnix_Db_Query
     /**
      * FIND methods
      */
-    public static function findAll(Gnix_Db_Criteria $criteria, array $columns = array('*'))
+    public static function findAll(Gnix_Db_Criteria $criteria, array $columns = array('*'), $connectionName = null)
     {
         $resolver = self::_getResolver();
         $sql = 'SELECT ' . implode(', ', $columns) . ' FROM ' . $resolver->getTable() . $criteria->assemble();
 
-        $dbh = Gnix_Db_Connection_Slave::get($resolver->getConnectionName());
+        $dbh = Gnix_Db_Connection_Slave::get($connectionName ?: $resolver->getConnectionName());
         $sth = $dbh->prepare($sql);
         $sth->execute($criteria->getParams());
         return self::_hydrate($resolver->getRowClass(), $sth->fetchAll());
     }
 
-    public static function find(Gnix_Db_Criteria $criteria, array $columns = array('*'))
+    public static function find(Gnix_Db_Criteria $criteria, array $columns = array('*'), $connectionName = null)
     {
-        $rowObjects = self::findAll($criteria, $columns);
+        $rowObjects = self::findAll($criteria, $columns, $connectionName);
         return isset($rowObjects[0]) ? $rowObjects[0] : null;
     }
 
-    public static function findByKey($key, array $columns = array('*'))
+    public static function findByKey($key, array $columns = array('*'), $connectionName = null)
     {
-        $criteria = self::_getCriteriaByKey($key);
-        return self::find($criteria, $columns);
+        return self::find(self::_getCriteriaByKey($key), $columns, $connectionName);
     }
 
-    public static function count(Gnix_Db_Criteria $criteria)
+    public static function count(Gnix_Db_Criteria $criteria, $connectionName = null)
     {
-        $rowObject = self::find($criteria, array('COUNT(*) AS count'));
+        $rowObject = self::find($criteria, array('COUNT(*) AS count'), $connectionName);
         return (int) $rowObject->getCount();
     }
 
     /**
-     * FIND (on Master) methods
-     * TODO: Don't Repeat Yourself!!!
+     * FIND on Master methods
+     * TODO: Code duplication! Keep it DRY!!
      */
-    public static function findAllOnMaster(Gnix_Db_Criteria $criteria, array $columns = array('*'))
+    public static function findAllOnMaster(Gnix_Db_Criteria $criteria, array $columns = array('*'), $connectionName = null)
     {
         $resolver = self::_getResolver();
         $sql = 'SELECT ' . implode(', ', $columns) . ' FROM ' . $resolver->getTable() . $criteria->assemble();
 
-        $dbh = Gnix_Db_Connection_Master::get($resolver->getConnectionName());
+        $dbh = Gnix_Db_Connection_Master::get($connectionName ?: $resolver->getConnectionName());
         $sth = $dbh->prepare($sql);
         $sth->execute($criteria->getParams());
         return self::_hydrate($resolver->getRowClass(), $sth->fetchAll());
     }
 
-    public static function findOnMaster(Gnix_Db_Criteria $criteria, array $columns = array('*'))
+    public static function findOnMaster(Gnix_Db_Criteria $criteria, array $columns = array('*'), $connectionName = null)
     {
-        $rowObjects = self::findAllOnMaster($criteria, $columns);
+        $rowObjects = self::findAllOnMaster($criteria, $columns, $connectionName);
         return isset($rowObjects[0]) ? $rowObjects[0] : null;
     }
 
-    public static function findByKeyOnMaster($key, array $columns = array('*'))
+    public static function findByKeyOnMaster($key, array $columns = array('*'), $connectionName = null)
     {
-        $criteria = self::_getCriteriaByKey($key);
-        return self::findOnMaster($criteria, $columns);
+        return self::findOnMaster(self::_getCriteriaByKey($key), $columns, $connectionName);
     }
 
-    public static function countOnMaster(Gnix_Db_Criteria $criteria)
+    public static function countOnMaster(Gnix_Db_Criteria $criteria, $connectionName = null)
     {
-        $rowObject = self::findOnMaster($criteria, array('COUNT(*) AS count'));
+        $rowObject = self::findOnMaster($criteria, array('COUNT(*) AS count'), $connectionName);
         return (int) $rowObject->getCount();
     }
 
     /**
      * UPDATE methods
      */
-    public static function update(array $data, Gnix_Db_Criteria $criteria)
+    public static function update(array $data, Gnix_Db_Criteria $criteria, $connectionName = null)
     {
         $holders = array();
         $params  = array();
@@ -130,36 +128,34 @@ abstract class Gnix_Db_Query
         $resolver = self::_getResolver();
         $sql = 'UPDATE ' . $resolver->getTable() . ' SET ' . implode(', ', $holders) . $criteria->assemble();
 
-        $dbh = Gnix_Db_Connection_Master::get($resolver->getConnectionName());
+        $dbh = Gnix_Db_Connection_Master::get($connectionName ?: $resolver->getConnectionName());
         $sth = $dbh->prepare($sql);
         $sth->execute(array_merge($params, $criteria->getParams()));
         return $sth->rowCount();
     }
 
-    public static function updateByKey(array $data, $key)
+    public static function updateByKey(array $data, $key, $connectionName = null)
     {
-        $criteria = self::_getCriteriaByKey($key);
-        return self::update($data, $criteria);
+        return self::update($data, self::_getCriteriaByKey($key), $connectionName);
     }
 
     /**
      * DELETE methods
      */
-    public static function delete(Gnix_Db_Criteria $criteria)
+    public static function delete(Gnix_Db_Criteria $criteria, $connectionName = null)
     {
         $resolver = self::_getResolver();
         $sql = 'DELETE FROM ' . $resolver->getTable() . $criteria->assemble();
 
-        $dbh = Gnix_Db_Connection_Master::get($resolver->getConnectionName());
+        $dbh = Gnix_Db_Connection_Master::get($connectionName ?: $resolver->getConnectionName());
         $sth = $dbh->prepare($sql);
         $sth->execute($criteria->getParams());
         return $sth->rowCount();
     }
 
-    public static function deleteByKey($key)
+    public static function deleteByKey($key, $connectionName = null)
     {
-        $criteria = self::_getCriteriaByKey($key);
-        return self::delete($criteria);
+        return self::delete(self::_getCriteriaByKey($key), $connectionName);
     }
 
     /**
@@ -170,6 +166,7 @@ abstract class Gnix_Db_Query
         return new Gnix_Db_Query_Resolver(get_called_class(), static::$_connectionName, static::$_table);
     }
 
+    // TODO: privateにすべき
     protected static function _getCriteriaByKey($key)
     {
         return self::_getCriteria()
