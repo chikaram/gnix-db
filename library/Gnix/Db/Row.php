@@ -14,7 +14,6 @@ abstract class Gnix_Db_Row
     private $_row = array();
     private $_connectionName;
 
-    // TODO: Connection custamize
     public function __construct($connectionName = null)
     {
         $this->_connectionName = $connectionName;
@@ -76,6 +75,24 @@ abstract class Gnix_Db_Row
 
         // INSERT if there is NOT Primary Key data.
         $key = $queryClass::create($this->_row, $this->_connectionName);
+        if ($findAfterCreate) {
+            $rowObject = $queryClass::findByKeyOnMaster($key, array('*'), $this->_connectionName);
+            if (!isset($rowObject->_row)) {
+                // Couldn't get data just after inserting it. This couldn't be possible!
+                throw new Gnix_Db_Exception("Can't get data 'PRIMARY KEY = $key' via $queryClass on master db.");
+            }
+            $this->_row = $rowObject->_row;
+        }
+        return $key;
+    }
+
+    // TODO: DRY! DRY! DRY!
+    public function upsert($findAfterCreate = true)
+    {
+        $queryClass = $this->_getQueryClass();
+
+        // REPLACE
+        $key = $queryClass::upsert($this->_row, $this->_connectionName);
         if ($findAfterCreate) {
             $rowObject = $queryClass::findByKeyOnMaster($key, array('*'), $this->_connectionName);
             if (!isset($rowObject->_row)) {

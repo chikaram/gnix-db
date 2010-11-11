@@ -47,6 +47,33 @@ abstract class Gnix_Db_Query
     }
 
     /**
+     * TODO: Code duplication! Keep it DRY!!
+     */
+    public static function upsert(array $data, $connectionName = null)
+    {
+        $columns = array();
+        $holders = array();
+        $params  = array();
+        foreach ($data as $key => $value) {
+            $columns[] = $key;
+            if ($value instanceof Gnix_Db_Literal) {
+                $holders[] = $value->toString();
+            } else {
+                $holders[] = '?';
+                $params[] = $value;
+            }
+        }
+
+        $resolver = self::_getResolver();
+        $sql = 'REPLACE INTO ' . $resolver->getTable() . ' (' . implode(', ', $columns) . ') VALUES (' . implode(', ', $holders) . ')';
+
+        $dbh = Gnix_Db_Connection_Master::get($connectionName ?: $resolver->getConnectionName());
+        $sth = $dbh->prepare($sql);
+        $sth->execute($params);
+        return $dbh->lastInsertId();
+    }
+
+    /**
      * FIND methods
      */
     public static function findAll(Gnix_Db_Criteria $criteria, array $columns = array('*'), $connectionName = null)
