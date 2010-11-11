@@ -166,8 +166,7 @@ abstract class Gnix_Db_Query
         return new Gnix_Db_Query_Resolver(get_called_class(), static::$_connectionName, static::$_table);
     }
 
-    // TODO: privateにすべき
-    protected static function _getCriteriaByKey($key)
+    private static function _getCriteriaByKey($key)
     {
         return self::_getCriteria()
             ->whereEqual(static::$_key, $key)
