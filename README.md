@@ -161,7 +161,7 @@ PHP5.3の機能、[遅延静的束縛](http://php.net/manual/ja/language.oop5.la
     {
     }
 
-なお、ZendFrameworkのオートローダーを設定しているなら、下記のようにファイルを配置すれば、require_onceが不要になります。また接続名とスキーマ名をあわせることにより、以下のように「スキーマ名（データベース名）/テーブル名」というディレクトリー構造になり、分かりやすいです。
+なお、ZendFrameworkのオートローダーを設定しているなら、下記のようにファイルを配置すれば、require_onceが不要になります。また接続名とスキーマ名をあわせることにより、以下のように「スキーマ名（データベース名）/テーブル名」というディレクトリー構造になります。
 
     [include_path]
      `-- Twitter
@@ -184,7 +184,7 @@ INSERTは以下のようにします。
 
 setしていないidカラムやcreated_atカラムが取得できる理由は、save() 直後に取得したLAST_INSERT_IDで再度SELECTし、その結果を自分自身のデータと置き換えているためです。また、このSELECTはスレーブDBの遅延も考慮してマスターDB上で行われます。このORMの特徴に「開発者が意図しないクエリー」と書きましたが、この1点だけは例外です。主キーでの取得は非常に高速なため、ほとんどの場合は問題ないと思いますが、マスターDBに[BLACKHOLE ストレージエンジン](http://dev.mysql.com/doc/refman/5.1/ja/blackhole-storage-engine.html)（もしくはMyISAM）を採用している等の特殊な理由で、このSELECT処理が不要な場合は、save(false) のようにfalseを渡すか、後述の createメソッドを利用してください。
 
-※なお、行クラスはコンストラクターに接続名を指定できます。twitter_backupという接続情報がある場合、TwitterBackup_Tweet\*クラスを作成してもよいですが、同じテーブル定義であれば、Twitter_Tweet\*を使いまわしたいです。そのような場合は、`$tweet = new Twitter_Tweet('twitter_backup');` というふうに接続名を指定できます。
+※なお、行クラスはコンストラクターに接続名を指定できます。twitter_backupという接続情報がある場合、TwitterBackup_Tweet\*クラスを作成してもよいですが、同じテーブル定義であれば、Twitter_Tweet\*を使いまわすことが可能です。そのような場合は、`$tweet = new Twitter_Tweet('twitter_backup');` というように接続名を指定できます。
 
 上記とは別のプロセスでSELECTする場合、以下のようにします。
 
