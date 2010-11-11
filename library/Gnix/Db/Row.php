@@ -12,8 +12,15 @@ abstract class Gnix_Db_Row
 {
     private static $_cache = array();
     private $_row = array();
+    private $_connectionName;
 
-    public function __construct(array $row = array())
+    // TODO: Connection custamize
+    public function __construct($connectionName = null)
+    {
+        $this->_connectionName = $connectionName;
+    }
+
+    public function row(array $row)
     {
         $this->_row = $row;
     }
@@ -57,21 +64,23 @@ abstract class Gnix_Db_Row
 
     public function save($findAfterCreate = true)
     {
-        $keyName = call_user_func(array($this->_getQueryClass(), 'getKeyName'));
+        $queryClass = $this->_getQueryClass();
+
+        $keyName = $queryClass::getKeyName();
 
         // UPDATE if there is Primary Key data.
         if (array_key_exists($keyName, $this->_row)) {
-            call_user_func(array($this->_getQueryClass(), 'updateByKey'), $this->_row, $this->_row[$keyName]);
+            $queryClass::updateByKey($this->_row, $this->_row[$keyName], $this->_connectionName);
             return;
         }
 
         // INSERT if there is NOT Primary Key data.
-        $key = call_user_func(array($this->_getQueryClass(), 'create'), $this->_row);
+        $key = $queryClass::create($this->_row, $this->_connectionName);
         if ($findAfterCreate) {
-            $rowObject = call_user_func(array($this->_getQueryClass(), 'findByKeyOnMaster'), $key);
+            $rowObject = $queryClass::findByKeyOnMaster($key, array('*'), $this->_connectionName);
             if (!isset($rowObject->_row)) {
                 // Couldn't get data just after inserting it. This couldn't be possible!
-                throw new Gnix_Db_Exception("Can't get data 'PRIMARY KEY = $key' from " . get_class($this) . 'master db.');
+                throw new Gnix_Db_Exception("Can't get data 'PRIMARY KEY = $key' via $queryClass on master db.");
             }
             $this->_row = $rowObject->_row;
         }
@@ -80,8 +89,10 @@ abstract class Gnix_Db_Row
 
     public function delete()
     {
-        $keyName = call_user_func(array($this->_getQueryClass(), 'getKeyName'));
-        call_user_func(array($this->_getQueryClass(), 'deleteByKey'), $this->_row[$keyName]);
+        $queryClass = $this->_getQueryClass();
+
+        $keyName = $queryClass::getKeyName();
+        $queryClass::deleteByKey($this->_row[$keyName], $this->_connectionName);
     }
 
     private function _getQueryClass()

@@ -57,7 +57,7 @@ abstract class Gnix_Db_Query
         $dbh = Gnix_Db_Connection_Slave::get($connectionName ?: $resolver->getConnectionName());
         $sth = $dbh->prepare($sql);
         $sth->execute($criteria->getParams());
-        return self::_hydrate($resolver->getRowClass(), $sth->fetchAll());
+        return self::_hydrate($resolver->getRowClass(), $sth->fetchAll(), $connectionName);
     }
 
     public static function find(Gnix_Db_Criteria $criteria, array $columns = array('*'), $connectionName = null)
@@ -89,7 +89,7 @@ abstract class Gnix_Db_Query
         $dbh = Gnix_Db_Connection_Master::get($connectionName ?: $resolver->getConnectionName());
         $sth = $dbh->prepare($sql);
         $sth->execute($criteria->getParams());
-        return self::_hydrate($resolver->getRowClass(), $sth->fetchAll());
+        return self::_hydrate($resolver->getRowClass(), $sth->fetchAll(), $connectionName);
     }
 
     public static function findOnMaster(Gnix_Db_Criteria $criteria, array $columns = array('*'), $connectionName = null)
@@ -174,11 +174,13 @@ abstract class Gnix_Db_Query
         ;
     }
 
-    private static function _hydrate($rowClass, array $rows)
+    private static function _hydrate($rowClass, array $rows, $connectionName)
     {
         $rowObjects = array();
         foreach ($rows as $row) {
-            $rowObjects[] = new $rowClass($row);
+            $rowObject = new $rowClass($connectionName);
+            $rowObject->row($row);
+            $rowObjects[] = $rowObject;
         }
         return $rowObjects;
     }
