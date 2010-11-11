@@ -47,7 +47,7 @@ PHP5.3の機能、[遅延静的束縛](http://php.net/manual/ja/language.oop5.la
   - 更新＝マスター/参照＝スレーブの自動切換え （また特定の参照クエリーをマスターに向けることも可能です）
   - DBへの遅延接続 （初めてクエリーが発行される際に初めて接続します）
   - 変則的なクエリー （Tritonnや自作プラグイン、ストアド関数、MySQL特有の日時関数等を自由に記述できます）
-  - MySQL専用の文法 （現在のところ USE INDEX、FORCE INDEX に対応しています）
+  - MySQL専用の構文 （現在のところREPLACE構文や USE INDEX、FORCE INDEXに対応しています）
   - 取得するカラムの指定 （デフォルトは「*」による全カラム取得ですが、必要なカラムをクエリー単位に指定できます）
   - 接続先のカスタマイズ （クラスのディレクトリー［データベース］単位、クラス［テーブル］単位、メソッド［クエリー］単位で設定のオーバーライド可能）
   - トランザクション （専用のメソッドはありませんがPDOオブジェクトを取得できるため自由に行えます）
@@ -184,6 +184,8 @@ INSERTは以下のようにします。
     echo $tweet->getCreatedAt();         // created_atカラムの値を表示
 
 setしていないidカラムやcreated_atカラムが取得できる理由は、save() 直後に取得したLAST_INSERT_IDで再度SELECTし、その結果を自分自身のデータと置き換えているためです。また、このSELECTはスレーブDBの遅延も考慮してマスターDB上で行われます。このORMの特徴に「開発者が意図しないクエリー」と書きましたが、この1点だけは例外です。主キーでの取得は非常に高速なため、ほとんどの場合は問題ないと思いますが、マスターDBに[BLACKHOLE ストレージエンジン](http://dev.mysql.com/doc/refman/5.1/ja/blackhole-storage-engine.html)（もしくはMyISAM）を採用している等の特殊な理由で、このSELECT処理が不要な場合は、save(false) のようにfalseを渡すか、後述の createメソッドを利用してください。
+
+また、save() メソッドはオブジェクトが主キー値を保持している場合はUPDATEメソッドを発行します。主キーがAUTO_INCREMENT等のデフォルト値を持たず、手動で主キーを設定した場合は、upsert() メソッドを利用します。
 
 ※なお、行クラスはコンストラクターに接続名を指定できます。twitter_backupという接続情報がある場合、TwitterBackup_Tweet\*クラスを作成してもよいですが、同じテーブル定義であれば、Twitter_Tweet\*を使いまわすことが可能です。そのような場合は、`$tweet = new Twitter_Tweet('twitter_backup');` というように接続名を指定できます。
 
@@ -408,7 +410,9 @@ $dataは挿入するデータの連想配列です。エスケープ不要な命
 
 #### REPLACE系
 
-実装予定
+1. int $lastInsertId = upsert(array $data, $connectionName = null)
+
+「REPLACE」というキーワードは文字列関数を連想させるので、[upsert](http://en.wikipedia.org/wiki/Upsert)というメソッド名を採用しました（update or insertの意）。
 
 なお、更新系クエリーは常にマスターDB上で行われます。スレーブDBでの更新メソッドはありません。
 
