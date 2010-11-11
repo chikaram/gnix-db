@@ -70,7 +70,7 @@ PHP5.3の機能、[遅延静的束縛](http://php.net/manual/ja/language.oop5.la
 
 ### 2. DB接続設定
 
-以下は、twitterスキーマのマスターDBへの設定例です。第一引数は接続名でなんでも構いませんが、スキーマ名と合わせると便利です。attributesは[PDO属性](http://php.net/manual/ja/pdo.setattribute.php)です。
+以下は、twitterスキーマのマスターDBへの設定例です。第一引数は「接続名」です。接続名は自由に決められますが、スキーマ名（データベース名）と合わせると便利です（理由は後述）。attributesは[PDO属性](http://php.net/manual/ja/pdo.setattribute.php)です。
 
     Gnix_Db_Connection_Master::setInfo(
         'twitter',
@@ -92,39 +92,19 @@ PHP5.3の機能、[遅延静的束縛](http://php.net/manual/ja/language.oop5.la
     Gnix_Db_Connection_Slave::setInfo(
         'twitter',
         array (
-            'host'   => '192.168.0.2',
-            'port'   => '3306',
-            'dbname' => 'twitter',
-            'user'   => 'username',
-            'pass'   => 'password',
-            'attributes' => array(
-                PDO::ATTR_ERRMODE            => PDO::ERRMODE_EXCEPTION,
-                PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
-            )
-        )
-    );
+            ：
 
 上記の情報を確認するには getInfo() メソッドを利用します。
 
     var_dump(Gnix_Db_Connection_Master::getInfo('twitter'));
     var_dump(Gnix_Db_Connection_Slave::getInfo('twitter'));
 
-単一サーバーで、マスター/スレーブ構成でない場合は、同じ設定を2度行うか、Gnix_Db_Connectionクラスを利用します。なおマスター/スレーブの設定情報がPDO属性を含めて完全に同じ場合は、内部的に同じ接続（PDOインスタンス）が利用されます。よってスレーブレスなDB設計の場合でもコネクションの無駄はありません。
+単一サーバーで、マスター/スレーブ構成でない場合は、同じ設定を2度行うか、Gnix_Db_Connectionクラスを利用します。なおマスター/スレーブの設定情報がPDO属性を含めて完全に同じ場合は、内部的に同じ接続（PDOインスタンス）が利用されます。よってスレーブレスなDB設計（理想的！）の場合でもコネクションの無駄はありません。
 
     Gnix_Db_Connection::setInfo(
         'twitter',
         array (
-            'host'   => '192.168.0.1',
-            'port'   => '3306',
-            'dbname' => 'twitter',
-            'user'   => 'username',
-            'pass'   => 'password',
-            'attributes' => array(
-                PDO::ATTR_ERRMODE            => PDO::ERRMODE_EXCEPTION,
-                PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
-            )
-        )
-    );
+            ：
 
 多くの場合、全ての環境のPDO属性は共通のものを利用すると思います。その場合、上記の接続設定よりも先にデフォルト値を設定します。
 
@@ -157,7 +137,7 @@ PHP5.3の機能、[遅延静的束縛](http://php.net/manual/ja/language.oop5.la
 
 [Table Data Gatewayパターン](http://martinfowler.com/eaaCatalog/tableDataGateway.html)を採用しているため、一つのテーブルにつき二つのクラスが必要です。
 
-クエリーの発行を担当するクエリークラスを作成します。**Gnix_Db_Query**を継承します。中身は空です。下記は、twitterスキーマのtweetテーブルに接続するためのクラスです。
+クエリーの発行を担当するクエリークラスを作成します。**Gnix_Db_Query**を継承します。中身は空です。下記は、接続名が「twitter」のtweetテーブルに接続するためのクラスです。
 
     <?php
     class Twitter_Tweet_Query extends Gnix_Db_Query
@@ -181,7 +161,7 @@ PHP5.3の機能、[遅延静的束縛](http://php.net/manual/ja/language.oop5.la
     {
     }
 
-なお、ZendFrameworkのオートローダーを設定しているなら、下記のようにファイルを配置すれば、require_onceが不要になります。
+なお、ZendFrameworkのオートローダーを設定しているなら、下記のようにファイルを配置すれば、require_onceが不要になります。また接続名とスキーマ名をあわせることにより、以下のように「スキーマ名（データベース名）/テーブル名」というディレクトリー構造になり、分かりやすいです。
 
     [include_path]
      `-- Twitter
@@ -203,6 +183,8 @@ INSERTは以下のようにします。
     echo $tweet->getCreatedAt();         // created_atカラムの値を表示
 
 setしていないidカラムやcreated_atカラムが取得できる理由は、save() 直後に取得したLAST_INSERT_IDで再度SELECTし、その結果を自分自身のデータと置き換えているためです。また、このSELECTはスレーブDBの遅延も考慮してマスターDB上で行われます。このORMの特徴に「開発者が意図しないクエリー」と書きましたが、この1点だけは例外です。主キーでの取得は非常に高速なため、ほとんどの場合は問題ないと思いますが、マスターDBに[BLACKHOLE ストレージエンジン](http://dev.mysql.com/doc/refman/5.1/ja/blackhole-storage-engine.html)（もしくはMyISAM）を採用している等の特殊な理由で、このSELECT処理が不要な場合は、save(false) のようにfalseを渡すか、後述の createメソッドを利用してください。
+
+※なお、行クラスはコンストラクターに接続名を指定できます。twitter_backupという接続情報がある場合、TwitterBackup_Tweet*クラスを作成してもよいですが、同じテーブル定義であれば、Twitter_Tweet*を使いまわしたいです。そのような場合は、`$tweet = new Twitter_Tweet('twitter_backup');` というふうに接続名を指定できます。
 
 上記とは別のプロセスでSELECTする場合、以下のようにします。
 
@@ -250,21 +232,13 @@ find系メソッドの第二引数は取得するカラム名の配列です。�
         }
     }
 
-以下、findFooBar() 内のコードです。
+以下、findFooBar() 内のコードです。[流暢なインターフェース](http://www.martinfowler.com/bliki/FluentInterface.html)を利用して以下のように書きます。
 
-    $criteria = self::_getCriteria();
-    $criteria->whereLike('text', '%あ%');   // text LIKE ? を生成
-    $criteria->orderByDesc('id');           // ORDER BY id DESC を生成
-    $criteria->limit(15);                   // LIMIT 15 を生成
-    $criteria->page(3);                     // 3ページ目（31件目以降）のoffset値を自動計算
-
-また、[流暢なインターフェース](http://www.martinfowler.com/bliki/FluentInterface.html)を利用して以下のように書くことも可能で、私のチームでは以下で統一しています。
-
-    $criteria = self::_getCriteria()
-        ->whereLike('text', '%あ%')
-        ->orderByDesc('id')
-        ->limit(15)
-        ->page(3)
+    $criteria = self::_getCriteria()   // Criteriaオブジェクト取得
+        ->whereLike('text', '%あ%')    // 'text LIKE ?' を生成
+        ->orderByDesc('id')            // 'ORDER BY id DESC' を生成
+        ->limit(15)                    // 'LIMIT 15' を生成
+        ->page(3)                      // 3ページ目（31件目以降）のoffset値を自動計算
     ;
 
 生成したCriteriaはdebug() メソッドで確認できます。
